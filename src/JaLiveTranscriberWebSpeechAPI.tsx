@@ -2,12 +2,15 @@ import React, { useEffect, useState, useRef } from "react";
 import styles from "./JaLiveTranscriber.module.css";
 
 const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
-    const [transcript, setTranscript] = useState<string>("");
+    const [finalTranscript, setFinalTranscript] = useState<string[]>([]); // финальный текст
+    const [interimTranscript, setInterimTranscript] = useState<string>(""); // текущий interim
     const [isListening, setIsListening] = useState<boolean>(false);
     const recognitionRef = useRef<any>(null);
 
     useEffect(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognition =
+            (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
         if (!SpeechRecognition) {
             alert("Ваш браузер не поддерживает Web Speech API");
             return;
@@ -19,19 +22,17 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
         recognition.continuous = true;
 
         recognition.onresult = (event: any) => {
-            let interimTranscript = "";
-            let finalTranscript = "";
+            // Берем последнюю часть
+            const lastResult = event.results[event.results.length - 1];
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                if (result.isFinal) {
-                    finalTranscript += result[0].transcript;
-                } else {
-                    interimTranscript += result[0].transcript;
-                }
+            if (lastResult.isFinal) {
+                // Сразу добавляем финальную часть в массив финальных
+                setFinalTranscript((prev) => [...prev, lastResult[0].transcript]);
+                setInterimTranscript(""); // очищаем интерим
+            } else {
+                // Обновляем нижний блок текущей частью
+                setInterimTranscript(lastResult[0].transcript);
             }
-
-            setTranscript(finalTranscript + interimTranscript);
         };
 
         recognition.onerror = (event: any) => {
@@ -50,6 +51,8 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
         } else {
             recognitionRef.current.start();
             setIsListening(true);
+            setFinalTranscript([]); // очищаем старое
+            setInterimTranscript(""); // очищаем старое
         }
     };
 
@@ -60,7 +63,20 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
                 <button className={styles.button} onClick={toggleListening}>
                     {isListening ? "Stop" : "Record"}
                 </button>
-                <p className={styles.transcript}>{transcript}</p>
+
+                <div className={styles.transcript}>
+                    <h3>Final transcription:</h3>
+                    {finalTranscript.map((text, index) => (
+                        <p key={index} style={{ color: "black" }}>
+                            {text}
+                        </p>
+                    ))}
+                </div>
+
+                <div className={styles.transcript}>
+                    <h3>Partial transcription:</h3>
+                    <span style={{ color: "gray" }}>{interimTranscript}</span>
+                </div>
             </div>
         </div>
     );

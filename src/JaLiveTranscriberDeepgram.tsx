@@ -3,47 +3,20 @@ import { createClient } from "@deepgram/sdk";
 import styles from "./JaLiveTranscriberDeepgram.module.css";
 
 const JaLiveTranscriber: React.FC = () => {
+    const [finalTranscript, setFinalTranscript] = useState<string[]>([]); // массив финальных частей
+    const [interimTranscript, setInterimTranscript] = useState<string>(""); // текущий interim
     const [isRecording, setIsRecording] = useState(false);
-    const [transcript, setTranscript] = useState("");
     const microphoneRef = useRef<MediaRecorder | null>(null);
     const socketRef = useRef<any>(null);
 
-    const captionsRef = useRef<HTMLDivElement>(null);
-
     const getMicrophone = async (): Promise<MediaRecorder> => {
-        const userMedia = await navigator.mediaDevices.getUserMedia({ audio: true });
-        return new MediaRecorder(userMedia);
-    };
-
-    const openMicrophone = async (microphone: MediaRecorder, socket: any) => {
-        microphone.start(500);
-
-        microphone.onstart = () => {
-            console.log("client: microphone opened");
-            setIsRecording(true);
-            document.body.classList.add("recording");
-        };
-
-        microphone.onstop = () => {
-            console.log("client: microphone closed");
-            setIsRecording(false);
-            document.body.classList.remove("recording");
-        };
-
-        microphone.ondataavailable = (e) => {
-            const data = e.data;
-            console.log("client: sent data to websocket");
-            socket.send(data);
-        };
-    };
-
-    const closeMicrophone = async (microphone: MediaRecorder) => {
-        microphone.stop();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        return new MediaRecorder(stream);
     };
 
     const getTempToken = async (): Promise<string> => {
-        const result = await fetch("https://voice-server-nu.vercel.app/token");
-        const json = await result.json();
+        const res = await fetch("https://voice-server-nu.vercel.app/token");
+        const json = await res.json();
         return json.access_token;
     };
 
@@ -51,11 +24,19 @@ const JaLiveTranscriber: React.FC = () => {
         if (!microphoneRef.current) {
             microphoneRef.current = await getMicrophone();
             if (socketRef.current) {
-                await openMicrophone(microphoneRef.current, socketRef.current);
+                microphoneRef.current.start(500);
+                microphoneRef.current.ondataavailable = (e) => {
+                    if (e.data.size > 0) socketRef.current.send(e.data);
+                };
+                microphoneRef.current.onstart = () => setIsRecording(true);
+                microphoneRef.current.onstop = () => setIsRecording(false);
             }
         } else {
-            await closeMicrophone(microphoneRef.current);
+            microphoneRef.current.stop();
             microphoneRef.current = null;
+            setIsRecording(false);
+            setFinalTranscript([]);
+            setInterimTranscript("");
         }
     };
 
@@ -63,26 +44,44 @@ const JaLiveTranscriber: React.FC = () => {
         const token = await getTempToken();
         const deepgram = createClient({ accessToken: token });
 
-        const socket = deepgram.listen.live({ model: "nova-3", smart_format: true, language: "ja-JP", interim_results: true });
+        const socket = deepgram.listen.live({
+            model: "nova-3",
+            smart_format: true,
+            language: "ja-JP",
+            interim_results: true,
+        });
         socketRef.current = socket;
 
         socket.on("open", () => {
-            console.log("client: connected to websocket");
+            console.log("Connected to Deepgram");
 
             socket.on("Results", (data: any) => {
                 const transcriptText = data.channel.alternatives[0].transcript;
-                if (transcriptText !== "") setTranscript((prev) => prev + transcriptText);
+                if (!transcriptText) return;
+
+                if (data.is_final) {
+                    // Финальная часть
+                    setFinalTranscript((prev) => [...prev, transcriptText]);
+                    setInterimTranscript(""); // очищаем interim
+                } else {
+                    // Частичная транскрипция
+                    setInterimTranscript(transcriptText);
+                }
             });
 
-            socket.on("error", (e: any) => console.error(e));
-            socket.on("warning", (e: any) => console.warn(e));
-            socket.on("Metadata", (e: any) => console.log(e));
-            socket.on("close", (e: any) => console.log(e));
+            socket.on("error", console.error);
+            socket.on("warning", console.warn);
+            socket.on("close", console.log);
         });
     };
 
     useEffect(() => {
         initWebSocket();
+        return () => {
+            if (microphoneRef.current && microphoneRef.current.state !== "inactive") {
+                microphoneRef.current.stop();
+            }
+        };
     }, []);
 
     return (
@@ -92,8 +91,17 @@ const JaLiveTranscriber: React.FC = () => {
                 <button className={styles.button} onClick={startRecording}>
                     {isRecording ? "Stop" : "Record"}
                 </button>
-                <div className={styles.captions} ref={captionsRef}>
-                    {transcript && <span>{transcript}</span>}
+
+                <div className={styles.captions}>
+                    <h3>Final transcription:</h3>
+                    {finalTranscript.map((text, index) => (
+                        <span key={index} style={{ color: "black" }}>{text}</span>
+                    ))}
+                </div>
+
+                <div className={styles.captions}>
+                    <h3>Partial transcription:</h3>
+                    <span style={{ color: "gray" }}>{interimTranscript}</span>
                 </div>
             </div>
         </div>
