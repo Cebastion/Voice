@@ -67,9 +67,9 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
                 <div className={styles.transcript}>
                     <h3>Final transcription:</h3>
                     {finalTranscript.map((text, index) => (
-                        <p key={index} style={{ color: "black" }}>
+                        <span key={index} style={{ color: "black" }}>
                             {text}
-                        </p>
+                        </span>
                     ))}
                 </div>
 
