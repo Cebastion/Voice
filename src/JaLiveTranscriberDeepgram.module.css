@@ -30,6 +30,13 @@
     background-color: #0077aa;
 }
 
+.buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px auto;
+}
+
 .captions {
     margin-top: 1rem;
     min-height: 120px;

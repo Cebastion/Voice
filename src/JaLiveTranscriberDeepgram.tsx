@@ -86,6 +86,12 @@ const JaLiveTranscriber: React.FC = () => {
     };
 
 
+    const Reset = () => {
+        setFinalTranscript([]);
+        setInterimTranscript("");
+    };
+
+
     // Очистка при размонтировании
     useEffect(() => {
         return () => {
@@ -101,10 +107,15 @@ const JaLiveTranscriber: React.FC = () => {
     return (
         <div className={styles.center}>
             <div className={styles.container}>
-                <h1 className={styles.title}>Deepgram Live Transcription</h1>
-                <button className={styles.button} onClick={startRecording}>
-                    {isRecording ? "Stop" : "Record"}
-                </button>
+                <h1 className={styles.title}>Deepgram</h1>
+                <div className={styles.buttons}>
+                    <button className={styles.button} onClick={startRecording}>
+                        {isRecording ? "Stop" : "Record"}
+                    </button>
+                    <button className={styles.button} onClick={Reset}>
+                        Reset
+                    </button>
+                </div>
 
                 <div className={styles.captions}>
                     <h3>Final transcription:</h3>

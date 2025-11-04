@@ -56,14 +56,21 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
         }
     };
 
+    const Reset = () => {
+        setFinalTranscript([]);
+        setInterimTranscript("");
+    };
+
     return (
         <div className={styles.center}>
             <div className={styles.container}>
                 <h1 className={styles.title}>Web Speech API</h1>
-                <button className={styles.button} onClick={toggleListening}>
-                    {isListening ? "Stop" : "Record"}
-                </button>
-
+                <div className={styles.buttons}>
+                    <button className={styles.button} onClick={toggleListening}>
+                        {isListening ? "Stop" : "Record"}
+                    </button>
+                    <button className={styles.button} onClick={Reset}>Reset</button>
+                </div>
                 <div className={styles.transcript}>
                     <h3>Final transcription:</h3>
                     {finalTranscript.map((text, index) => (
