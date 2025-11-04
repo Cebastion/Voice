@@ -86,12 +86,15 @@ const JaLiveTranscriber: React.FC = () => {
     }, []);
 
     return (
-        <div className={styles.container}>
-            <button className={styles.button} onClick={startRecording}>
-                {isRecording ? "Stop" : "Record"}
-            </button>
-            <div className={styles.captions} ref={captionsRef}>
-                {transcript && <span>{transcript}</span>}
+        <div className={styles.center}>
+            <div className={styles.container}>
+                <h1 className={styles.title}>Deepgram</h1>
+                <button className={styles.button} onClick={startRecording}>
+                    {isRecording ? "Stop" : "Record"}
+                </button>
+                <div className={styles.captions} ref={captionsRef}>
+                    {transcript && <span>{transcript}</span>}
+                </div>
             </div>
         </div>
     );

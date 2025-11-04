@@ -54,11 +54,14 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
     };
 
     return (
-        <div className={styles.container}>
-            <p className={styles.transcript}>{transcript}</p>
-            <button className={styles.button} onClick={toggleListening}>
-                {isListening ? "Остановить" : "Начать"}
-            </button>
+        <div className={styles.center}>
+            <div className={styles.container}>
+                <h1 className={styles.title}>Web Speech API</h1>
+                <button className={styles.button} onClick={toggleListening}>
+                    {isListening ? "Stop" : "Record"}
+                </button>
+                <p className={styles.transcript}>{transcript}</p>
+            </div>
         </div>
     );
 };
