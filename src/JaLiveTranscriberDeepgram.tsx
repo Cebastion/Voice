@@ -42,7 +42,7 @@ const JaLiveTranscriber: React.FC = () => {
     };
 
     const getTempToken = async (): Promise<string> => {
-        const result = await fetch("http://localhost:3000/token");
+        const result = await fetch("https://voice-server-nu.vercel.app/token");
         const json = await result.json();
         return json.access_token;
     };
