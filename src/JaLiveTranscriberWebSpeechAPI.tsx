@@ -55,7 +55,6 @@ const JaLiveTranscriberWebSpeechAPI: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.heading}>Живая транскрипция на русский:</h2>
             <p className={styles.transcript}>{transcript}</p>
             <button className={styles.button} onClick={toggleListening}>
                 {isListening ? "Остановить" : "Начать"}
